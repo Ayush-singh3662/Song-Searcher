@@ -1,25 +1,40 @@
-import logo from './logo.svg';
+import React, { useState } from 'react';
 import './App.css';
+import SearchBar from './components/SearchBar';
+import SongList from './components/SongList';
+import { getToken, searchSongs } from './spotifyService';
+import filterSongs from './utils/filterSongs';
 
 function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+    const [songs, setSongs] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+
+    const handleSearch = async (query) => {
+        setLoading(true);
+        setError(null);
+
+        try {
+            const token = await getToken();
+            const results = await searchSongs(query, token);
+            const filteredResults = filterSongs(results);
+            setSongs(filteredResults);
+        } catch (err) {
+            setError('Failed to fetch songs. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="App">
+            <h1>Song Searcher</h1>
+            <SearchBar onSearch={handleSearch} />
+            {loading && <p className='loading'>Loading...</p>}
+            {error && <p className='error'>{error}</p>}
+            <SongList songs={songs} />
+        </div>
+    );
 }
 
 export default App;
